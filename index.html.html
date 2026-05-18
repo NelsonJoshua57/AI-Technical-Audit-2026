@@ -1,0 +1,740 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Winkworth — AI Visibility Benchmark Report</title>
+<link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=DM+Mono:wght@400;500&family=Outfit:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    /* ── Winkworth exact brand palette ── */
+    --wink:         #bf0a2e;   /* Primary brand red — from winkworth.co.uk */
+    --wink-dark:    #FFFFFF;   /* Hover / pressed state */
+    --wink-mid:     #A8792A;   /* Mid-tone red */
+    --wink-light:   #f7e0e5;   /* Red tint background */
+    --wink-xlight:  #1a1a1a;   /* Very pale red surface */
+
+    /* ── Neutrals — from site's nav / body ── */
+    --ink:          #1a1a1a;   /* Near-black — headings */
+    --ink-2:        #333333;   /* Body text */
+    --ink-3:        #666666;   /* Muted / secondary text */
+    --ink-4:        #999999;   /* Placeholder / tertiary */
+
+    /* ── Off-white backgrounds — site uses warm whites ── */
+    --paper:        #ffffff;   /* Page background */
+    --paper-2:      #f8f8f6;   /* Section background */
+    --paper-3:      #f0eeeb;   /* Subtle surface */
+    --paper-4:      #e8e5e0;   /* Border-adjacent surface */
+
+    /* ── Accent colours for report status ── */
+    --gold:         #A67C3A;   /* Warning amber */
+    --gold-light:   #fdf5e0;
+    --green:        #1a6b3c;   /* Success green */
+    --green-light:  #e0f2e9;
+
+    --border: rgba(26,26,26,0.10);
+  }
+
+  html { font-size: 16px; }
+  body {
+    font-family: 'Outfit', sans-serif;
+    background: var(--paper);
+    color: var(--ink);
+    line-height: 1.6;
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .report-header {
+    background: #0f143c;
+    color: #ffffff;
+    padding: 48px 64px 40px;
+    position: relative;
+    overflow: hidden;
+  }
+  .report-header::before {
+    content: '';
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 320px; height: 320px;
+    border-radius: 50%;
+    border: 1.5px solid rgba(200,16,46,0.25);
+    pointer-events: none;
+  }
+  .report-header::after {
+    content: '';
+    position: absolute;
+    top: 20px; right: 20px;
+    width: 200px; height: 200px;
+    border-radius: 50%;
+    border: 1px solid rgba(200,16,46,0.15);
+    pointer-events: none;
+  }
+  .header-inner { display: flex; align-items: flex-end; justify-content: space-between; gap: 40px; }
+  .header-left {}
+  .report-eyebrow {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    color: var(--wink);
+    margin-bottom: 12px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .report-eyebrow::before {
+    content: '';
+    display: inline-block;
+    width: 24px; height: 1.5px;
+    background: var(--wink);
+  }
+  .report-title {
+    font-family: 'DM Serif Display', serif;
+    font-size: 48px;
+    line-height: 1.05;
+    color: var(--paper);
+    margin-bottom: 8px;
+  }
+  .report-title em {
+    color: #A8792A;
+    font-style: italic;
+  }
+  .report-sub {
+    font-size: 15px;
+    color: rgba(247,245,240,0.55);
+    font-weight: 300;
+    margin-top: 10px;
+  }
+  .header-meta {
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .meta-item {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: rgba(247,245,240,0.45);
+    letter-spacing: 0.06em;
+    margin-bottom: 4px;
+  }
+  .meta-value {
+    font-size: 13px;
+    color: rgba(247,245,240,0.8);
+    font-weight: 500;
+    margin-bottom: 12px;
+  }
+
+  /* ── ALERT BANNER ── */
+  .alert-banner {
+    background: #c18948;
+    color: white;
+    padding: 14px 64px;
+    display: flex; align-items: center; gap: 16px;
+    font-size: 13px;
+    font-weight: 500;
+  }
+  .alert-icon {
+    width: 20px; height: 20px;
+    border: 1.5px solid rgba(255,255,255,0.6);
+    border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px;
+    flex-shrink: 0;
+  }
+
+  /* ── MAIN LAYOUT ── */
+  .main { padding: 48px 64px; max-width: 1200px; margin: 0 auto; }
+
+  /* ── SECTION LABELS ── */
+  .section-label {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.14em;
+    text-transform: uppercase;
+    color: #c18948;
+    margin-bottom: 20px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .section-label::after {
+    content: '';
+    flex: 1;
+    height: 0.5px;
+    background: var(--border);
+  }
+  section { margin-bottom: 56px; }
+
+  /* ── KPI STRIP ── */
+  .kpi-grid {
+    display: grid;
+    grid-template-columns: repeat(6, 1fr);
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .kpi-cell {
+    padding: 20px 18px;
+    border-right: 1px solid var(--border);
+    position: relative;
+  }
+  .kpi-cell:last-child { border-right: none; }
+  .kpi-cell.winkworth { background: var(--ink); }
+  .kpi-platform {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--ink-3);
+    margin-bottom: 10px;
+  }
+  .kpi-cell.winkworth .kpi-platform { color: rgba(247,245,240,0.45); }
+  .kpi-number {
+    font-family: 'DM Serif Display', serif;
+    font-size: 36px;
+    color: #A8792A;
+    line-height: 1;
+    margin-bottom: 6px;
+  }
+  .kpi-cell.winkworth .kpi-number { color: var(--wink); }
+  .kpi-brand {
+    font-size: 12px;
+    color: var(--ink-3);
+    font-weight: 300;
+  }
+  .kpi-cell.winkworth .kpi-brand { color: rgba(247,245,240,0.55); }
+  .rank-tag {
+    position: absolute;
+    top: 14px; right: 14px;
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    padding: 2px 6px;
+    border-radius: 2px;
+  }
+  .rank-last { background: var(--wink-light); color: var(--wink); }
+  .rank-first { background: var(--green-light); color: var(--green); }
+
+  /* ── MAIN TABLE ── */
+  .data-table-wrap {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  table { width: 100%; border-collapse: collapse; }
+  thead tr {
+    background: #1a1a1a;
+    border-bottom: 2px solid var(--wink);
+  }
+  thead th {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: rgba(247,245,240,0.5);
+    padding: 14px 18px;
+    text-align: right;
+    font-weight: 400;
+  }
+  thead th:first-child { text-align: left; color: rgba(247,245,240,0.7); }
+  tbody tr { border-bottom: 1px solid var(--border); }
+  tbody tr:last-child { border-bottom: none; }
+  tbody tr:hover { background: var(--paper-2); }
+  tbody tr.winkworth-row { background: var(--paper-2); }
+  tbody td {
+    padding: 16px 18px;
+    font-size: 14px;
+    text-align: right;
+    color: var(--ink-2);
+  }
+  tbody td:first-child {
+    text-align: left;
+    font-weight: 500;
+    color: var(--ink);
+  }
+  tbody tr.winkworth-row td { font-weight: 600; }
+  tbody tr.winkworth-row td:first-child { color: var(--wink); }
+
+  .bar-cell { position: relative; }
+  .bar-wrap {
+    display: flex; align-items: center; gap: 10px;
+    justify-content: flex-end;
+  }
+  .bar-num { min-width: 32px; text-align: right; font-family: 'DM Mono', monospace; font-size: 13px; }
+  .bar-track {
+    width: 80px; height: 4px;
+    background: var(--paper-3);
+    border-radius: 2px;
+    overflow: hidden;
+  }
+  .bar-fill { height: 100%; border-radius: 2px; background: var(--ink-3); }
+  .winkworth-row .bar-fill { background: var(--wink); }
+  .total-col { font-family: 'DM Serif Display', serif; font-size: 17px; }
+  .winkworth-row .total-col { color: var(--wink); }
+
+  /* ── ANALYSIS GRID ── */
+  .analysis-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; }
+  .analysis-card {
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    padding: 24px;
+  }
+  .analysis-card h3 {
+    font-family: 'DM Serif Display', serif;
+    font-size: 18px;
+    color: var(--ink);
+    margin-bottom: 6px;
+  }
+  .analysis-card .card-sub {
+    font-size: 12px;
+    color: var(--ink-3);
+    font-weight: 300;
+    margin-bottom: 20px;
+  }
+
+  /* Platform breakdown mini chart */
+  .platform-rows { display: flex; flex-direction: column; gap: 10px; }
+  .platform-row { display: flex; align-items: center; gap: 12px; }
+  .platform-name {
+    font-family: 'DM Mono', monospace;
+    font-size: 11px;
+    color: var(--ink-3);
+    width: 90px;
+    flex-shrink: 0;
+  }
+  .platform-bar-track {
+    flex: 1; height: 6px;
+    background: var(--paper-3);
+    border-radius: 3px;
+    overflow: hidden;
+  }
+  .platform-bar-fill { height: 100%; border-radius: 3px; }
+  .platform-num {
+    font-family: 'DM Mono', monospace;
+    font-size: 12px;
+    color: var(--ink-2);
+    width: 32px;
+    text-align: right;
+    flex-shrink: 0;
+  }
+  .c-red { background: var(--wink); }
+  .c-gold { background: var(--gold); }
+  .c-ink { background: var(--ink-3); }
+
+  /* Competitor share */
+  .share-rows { display: flex; flex-direction: column; gap: 8px; }
+  .share-row { display: flex; align-items: center; gap: 10px; font-size: 13px; }
+  .share-label { width: 100px; color: var(--ink-2); flex-shrink: 0; }
+  .share-label.wink-label { color: var(--wink); font-weight: 600; }
+  .share-bar-track { flex: 1; height: 20px; background: var(--paper-3); border-radius: 2px; overflow: hidden; }
+  .share-bar-fill { height: 100%; display: flex; align-items: center; padding-left: 8px; font-size: 11px; font-weight: 600; color: white; font-family: 'DM Mono', monospace; border-radius: 2px; }
+
+  /* ── PLATFORM PERFORMANCE TABLE ── */
+  .platform-perf { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--border); border: 1px solid var(--border); border-radius: 2px; overflow: hidden; }
+  .perf-cell { background: var(--paper); padding: 20px; }
+  .perf-platform { font-family: 'DM Mono', monospace; font-size: 10px; letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-3); margin-bottom: 14px; }
+  .perf-rank { font-family: 'DM Serif Display', serif; font-size: 32px; color: var(--wink); line-height: 1; margin-bottom: 4px; }
+  .perf-rank span { font-family: 'Outfit', sans-serif; font-size: 13px; color: var(--ink-3); font-weight: 300; }
+  .perf-note { font-size: 12px; color: var(--ink-3); font-weight: 300; line-height: 1.5; margin-top: 10px; }
+  .perf-number { font-family: 'DM Mono', monospace; font-size: 22px; font-weight: 500; color: var(--ink); margin-bottom: 2px; }
+
+  /* ── INSIGHTS ── */
+  .insights { display: flex; flex-direction: column; gap: 12px; }
+  .insight-row {
+    display: flex; align-items: flex-start; gap: 16px;
+    padding: 16px 20px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    border-left: 3px solid var(--wink);
+  }
+  .insight-row.positive { border-left-color: var(--green); }
+  .insight-row.warning { border-left-color: var(--gold); }
+  .insight-num {
+    font-family: 'DM Serif Display', serif;
+    font-size: 24px;
+    color: var(--paper-3);
+    line-height: 1;
+    flex-shrink: 0;
+    width: 28px;
+  }
+  .insight-text { font-size: 14px; color: var(--ink-2); line-height: 1.6; }
+  .insight-text strong { color: var(--ink); font-weight: 600; }
+
+  /* ── RECOMMENDATIONS ── */
+  .rec-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; }
+  .rec-card {
+    padding: 22px;
+    border: 1px solid var(--border);
+    border-radius: 2px;
+    position: relative;
+    overflow: hidden;
+  }
+  .rec-card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+  }
+  .rec-card.p1::before { background: var(--wink); }
+  .rec-card.p2::before { background: var(--gold); }
+  .rec-card.p3::before { background: var(--green); }
+  .rec-priority {
+    font-family: 'DM Mono', monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    margin-bottom: 10px;
+  }
+  .p1 .rec-priority { color: var(--wink); }
+  .p2 .rec-priority { color: var(--gold); }
+  .p3 .rec-priority { color: var(--green); }
+  .rec-title { font-weight: 600; font-size: 14px; color: var(--ink); margin-bottom: 8px; line-height: 1.4; }
+  .rec-desc { font-size: 13px; color: var(--ink-3); font-weight: 300; line-height: 1.6; }
+
+  /* ── FOOTER ── */
+  .report-footer {
+    border-top: 1px solid var(--border);
+    padding: 24px 64px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 12px;
+    color: var(--ink-3);
+    font-family: 'DM Mono', monospace;
+    letter-spacing: 0.04em;
+  }
+  .footer-brand { color: var(--ink); font-weight: 500; }
+
+  /* ── PRINT ── */
+  @media print {
+    .alert-banner { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    .report-header { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+    thead tr { -webkit-print-color-adjust: exact; print-color-adjust: exact; }
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(12px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .main > section { animation: fadeUp 0.5s ease both; }
+  .main > section:nth-child(1) { animation-delay: 0.05s; }
+  .main > section:nth-child(2) { animation-delay: 0.12s; }
+  .main > section:nth-child(3) { animation-delay: 0.19s; }
+  .main > section:nth-child(4) { animation-delay: 0.26s; }
+  .main > section:nth-child(5) { animation-delay: 0.33s; }
+</style>
+</head>
+<body>
+
+<!-- HEADER -->
+<header class="report-header">
+  <div class="header-inner">
+    <div class="header-left">
+      <div class="report-eyebrow">AI Visibility Baseline Report</div>
+      <h1 class="report-title">Winkworth<br><em>AI Presence</em><br>Benchmark</h1>
+      <p class="report-sub">Competitive analysis across Google AI Overview, ChatGPT, Perplexity, Gemini, Copilot &amp; Grok</p>
+    </div>
+    <div class="header-meta">
+      <div class="meta-item">PREPARED FOR</div>
+      <div class="meta-value">Winkworth Estate Agents</div>
+      <div class="meta-item">REPORT TYPE</div>
+      <div class="meta-value">Baseline — 2026</div>
+      <div class="meta-item">CLASSIFICATION</div>
+      <div class="meta-value">Confidential</div>
+    </div>
+  </div>
+</header>
+
+<!-- ALERT -->
+<div class="alert-banner">
+  <div class="alert-icon">!</div>
+  <span>Critical finding: Winkworth ranks <strong>last across all six AI platforms</strong> — immediate GEO optimisation required to close the visibility gap.</span>
+</div>
+
+<!-- MAIN -->
+<main class="main">
+
+  <!-- KPI STRIP -->
+  <section>
+    <p class="section-label">01 — Winkworth total AI citation count by platform</p>
+    <div class="kpi-grid">
+      <div class="kpi-cell winkworth">
+        <div class="kpi-platform">Total citations</div>
+        <div class="kpi-number">163</div>
+        <div class="kpi-brand">Winkworth (all platforms)</div>
+        <span class="rank-tag rank-last">4th of 4</span>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-platform">Google AI Overview</div>
+        <div class="kpi-number">46</div>
+        <div class="kpi-brand">vs 284 Foxtons</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-platform">ChatGPT</div>
+        <div class="kpi-number">34</div>
+        <div class="kpi-brand">vs 279 Hamptons</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-platform">Perplexity</div>
+        <div class="kpi-number">12</div>
+        <div class="kpi-brand">vs 303 Foxtons</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-platform">Gemini</div>
+        <div class="kpi-number">0</div>
+        <div class="kpi-brand">No citations recorded</div>
+      </div>
+      <div class="kpi-cell">
+        <div class="kpi-platform">Copilot + Grok</div>
+        <div class="kpi-number">71</div>
+        <div class="kpi-brand">7 Copilot · 64 Grok</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- DATA TABLE -->
+  <section>
+    <p class="section-label">02 — Full competitor citation data</p>
+    <div class="data-table-wrap">
+      <table>
+        <thead>
+          <tr>
+            <th>Competitor</th>
+            <th>Google AI Overview</th>
+            <th>ChatGPT</th>
+            <th>Perplexity</th>
+            <th>Gemini</th>
+            <th>Copilot</th>
+            <th>Grok</th>
+            <th>Total</th>
+          </tr>
+        </thead>
+        <tbody>
+          <!-- Max values for bar: GAO=284, ChatGPT=279, Perplexity=303, Gemini=80, Copilot=49, Grok=350 -->
+          <tr>
+            <td>Foxtons</td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">284</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">229</span><div class="bar-track"><div class="bar-fill" style="width:82%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">303</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">26</span><div class="bar-track"><div class="bar-fill" style="width:33%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">46</span><div class="bar-track"><div class="bar-fill" style="width:94%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">350</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div></td>
+            <td class="total-col">1,238</td>
+          </tr>
+          <tr>
+            <td>Dexters</td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">21</span><div class="bar-track"><div class="bar-fill" style="width:7%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">52</span><div class="bar-track"><div class="bar-fill" style="width:19%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">22</span><div class="bar-track"><div class="bar-fill" style="width:7%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">14</span><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">12</span><div class="bar-track"><div class="bar-fill" style="width:24%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">51</span><div class="bar-track"><div class="bar-fill" style="width:15%"></div></div></div></td>
+            <td class="total-col">172</td>
+          </tr>
+          <tr>
+            <td>Hamptons</td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">128</span><div class="bar-track"><div class="bar-fill" style="width:45%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">279</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">95</span><div class="bar-track"><div class="bar-fill" style="width:31%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">80</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">49</span><div class="bar-track"><div class="bar-fill" style="width:100%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">259</span><div class="bar-track"><div class="bar-fill" style="width:74%"></div></div></div></td>
+            <td class="total-col">890</td>
+          </tr>
+          <tr class="winkworth-row">
+            <td>Winkworth</td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">46</span><div class="bar-track"><div class="bar-fill" style="width:16%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">34</span><div class="bar-track"><div class="bar-fill" style="width:12%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">12</span><div class="bar-track"><div class="bar-fill" style="width:4%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">0</span><div class="bar-track"><div class="bar-fill" style="width:0%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">7</span><div class="bar-track"><div class="bar-fill" style="width:14%"></div></div></div></td>
+            <td class="bar-cell"><div class="bar-wrap"><span class="bar-num">64</span><div class="bar-track"><div class="bar-fill" style="width:18%"></div></div></div></td>
+            <td class="total-col">163</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </section>
+
+  <!-- ANALYSIS -->
+  <section>
+    <p class="section-label">03 — Visibility analysis</p>
+    <div class="analysis-grid">
+
+      <div class="analysis-card">
+        <h3>Winkworth platform breakdown</h3>
+        <p class="card-sub">Citations by AI platform — share of Winkworth's 163 total</p>
+        <div class="platform-rows">
+          <div class="platform-row">
+            <div class="platform-name">Grok</div>
+            <div class="platform-bar-track"><div class="platform-bar-fill c-ink" style="width:39%"></div></div>
+            <div class="platform-num">64</div>
+          </div>
+          <div class="platform-row">
+            <div class="platform-name">Google AIO</div>
+            <div class="platform-bar-track"><div class="platform-bar-fill c-red" style="width:28%"></div></div>
+            <div class="platform-num">46</div>
+          </div>
+          <div class="platform-row">
+            <div class="platform-name">ChatGPT</div>
+            <div class="platform-bar-track"><div class="platform-bar-fill c-gold" style="width:21%"></div></div>
+            <div class="platform-num">34</div>
+          </div>
+          <div class="platform-row">
+            <div class="platform-name">Perplexity</div>
+            <div class="platform-bar-track"><div class="platform-bar-fill c-ink" style="width:7%"></div></div>
+            <div class="platform-num">12</div>
+          </div>
+          <div class="platform-row">
+            <div class="platform-name">Copilot</div>
+            <div class="platform-bar-track"><div class="platform-bar-fill c-ink" style="width:4%"></div></div>
+            <div class="platform-num">7</div>
+          </div>
+          <div class="platform-row">
+            <div class="platform-name">Gemini</div>
+            <div class="platform-bar-track"><div class="platform-bar-fill c-red" style="width:0%"></div></div>
+            <div class="platform-num" style="color:var(--wink); font-weight:600;">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="analysis-card">
+        <h3>Share of total AI citations</h3>
+        <p class="card-sub">All competitors combined — 2,463 total citations</p>
+        <div class="share-rows">
+          <div class="share-row">
+            <div class="share-label">Foxtons</div>
+            <div class="share-bar-track"><div class="share-bar-fill" style="width:50%; background:var(--ink);">50%</div></div>
+          </div>
+          <div class="share-row">
+            <div class="share-label">Hamptons</div>
+            <div class="share-bar-track"><div class="share-bar-fill" style="width:36%; background:var(--ink-3);">36%</div></div>
+          </div>
+          <div class="share-row">
+            <div class="share-label">Dexters</div>
+            <div class="share-bar-track"><div class="share-bar-fill" style="width:7%; background:var(--ink-3); font-size:10px;">7%</div></div>
+          </div>
+          <div class="share-row">
+            <div class="share-label wink-label">Winkworth</div>
+            <div class="share-bar-track"><div class="share-bar-fill" style="width:7%; background:var(--wink); font-size:10px;">7%</div></div>
+          </div>
+        </div>
+        <p style="margin-top:18px; font-size:12px; color:var(--ink-3); font-weight:300; line-height:1.6;">Winkworth holds just <strong style="color:var(--wink)">7%</strong> of the combined AI citation share — equal to Dexters — while operating a network significantly larger.</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- PLATFORM PERFORMANCE -->
+  <section>
+    <p class="section-label">04 — Platform-by-platform standing</p>
+    <div class="platform-perf">
+      <div class="perf-cell">
+        <div class="perf-platform">Google AI Overview</div>
+        <div class="perf-number">46</div>
+        <div class="perf-rank">4th <span>of 4</span></div>
+        <div class="perf-note">Foxtons leads with 284. Winkworth captures 8% of total Google AIO citations. Schema markup and FAQ content gaps likely contributing.</div>
+      </div>
+      <div class="perf-cell">
+        <div class="perf-platform">ChatGPT</div>
+        <div class="perf-number">34</div>
+        <div class="perf-rank">4th <span>of 4</span></div>
+        <div class="perf-note">Hamptons dominates with 279. Low ChatGPT citations correlate with limited Wikipedia presence and thin authoritative content.</div>
+      </div>
+      <div class="perf-cell">
+        <div class="perf-platform">Perplexity</div>
+        <div class="perf-number">12</div>
+        <div class="perf-rank">4th <span>of 4</span></div>
+        <div class="perf-note">Foxtons at 303. Perplexity relies heavily on real-time web indexing — improving structured content will have immediate impact here.</div>
+      </div>
+      <div class="perf-cell" style="background:var(--wink-light);">
+        <div class="perf-platform" style="color:var(--wink);">Gemini</div>
+        <div class="perf-number" style="color:var(--wink);">0</div>
+        <div class="perf-rank" style="color:var(--wink);">Not cited <span style="color:var(--ink-3)">vs 80 Hamptons</span></div>
+        <div class="perf-note">Zero Gemini citations is a significant gap. Google's own AI product not surfacing Winkworth suggests critical on-site optimisation issues.</div>
+      </div>
+      <div class="perf-cell">
+        <div class="perf-platform">Copilot</div>
+        <div class="perf-number">7</div>
+        <div class="perf-rank">4th <span>of 4</span></div>
+        <div class="perf-note">Hamptons leads at 49. Copilot draws from Bing index — improving Bing Search presence will lift Copilot citations.</div>
+      </div>
+      <div class="perf-cell">
+        <div class="perf-platform">Grok</div>
+        <div class="perf-number">64</div>
+        <div class="perf-rank">3rd <span>of 4</span></div>
+        <div class="perf-note">Best relative performance — 64 vs Foxtons' 350. X/Twitter social signals likely factor. Opportunity to build on this platform.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- KEY INSIGHTS -->
+  <section>
+    <p class="section-label">05 — Key insights</p>
+    <div class="insights">
+      <div class="insight-row">
+        <div class="insight-num">01</div>
+        <div class="insight-text"><strong>Gemini zero-citation is the most urgent issue.</strong> Google's own AI platform returning no citations for Winkworth indicates fundamental indexing or E-E-A-T (Experience, Expertise, Authoritativeness, Trust) gaps that will also suppress Google AI Overview performance.</div>
+      </div>
+      <div class="insight-row">
+        <div class="insight-num">02</div>
+        <div class="insight-text"><strong>Foxtons' dominance across all platforms (1,238 total) suggests strong structured data and authoritative content.</strong> Foxtons' Google AIO lead (284 vs 46) is likely driven by robust schema markup, FAQ content, and backlink authority — all directly replicable.</div>
+      </div>
+      <div class="insight-row warning">
+        <div class="insight-num">03</div>
+        <div class="insight-text"><strong>Perplexity gap is the largest in absolute terms (12 vs 303).</strong> Perplexity indexes real-time web content — this suggests Winkworth's content is either not being discovered or not considered authoritative enough to surface in response to estate agent queries.</div>
+      </div>
+      <div class="insight-row positive">
+        <div class="insight-num">04</div>
+        <div class="insight-text"><strong>Grok is Winkworth's relative strength.</strong> With 64 citations (vs Foxtons 350), Winkworth performs best proportionally on Grok. If Winkworth has an active X/Twitter presence, this can be leveraged as a GEO quick win.</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- RECOMMENDATIONS -->
+  <section>
+    <p class="section-label">06 — Recommended actions</p>
+    <div class="rec-grid">
+      <div class="rec-card p1">
+        <div class="rec-priority">P1 — Immediate</div>
+        <div class="rec-title">Deploy structured data across all key pages</div>
+        <div class="rec-desc">Implement Organization, LocalBusiness, FAQPage, and RealEstateListing schema on winkworth.co.uk. This directly feeds Google AI Overview and Gemini citations.</div>
+      </div>
+      <div class="rec-card p1">
+        <div class="rec-priority">P1 — Immediate</div>
+        <div class="rec-title">Establish / expand Wikipedia &amp; Wikidata presence</div>
+        <div class="rec-desc">LLMs heavily weight Wikipedia as a training source. A comprehensive, factual Wikipedia article on Winkworth will lift ChatGPT, Gemini and Perplexity citations significantly.</div>
+      </div>
+      <div class="rec-card p1">
+        <div class="rec-priority">P1 — Immediate</div>
+        <div class="rec-title">Resolve Gemini zero-citation root cause</div>
+        <div class="rec-desc">Audit E-E-A-T signals: author bios, Google Business Profile, press mentions. Zero Gemini citations indicate a trust signal deficiency that must be diagnosed and fixed.</div>
+      </div>
+      <div class="rec-card p2">
+        <div class="rec-priority">P2 — 30 days</div>
+        <div class="rec-title">Publish AI-optimised FAQ &amp; guide content</div>
+        <div class="rec-desc">Create long-form, question-led content targeting the prompt categories from the AI testing sheet. Structure answers in 40–60 word paragraphs that AIs can easily extract.</div>
+      </div>
+      <div class="rec-card p2">
+        <div class="rec-priority">P2 — 30 days</div>
+        <div class="rec-title">Set up GA4 AI referrer tracking</div>
+        <div class="rec-desc">Configure a custom channel group for AI traffic sources (ChatGPT, Perplexity, Bing AI, Gemini). Establish the baseline before optimisation lifts begin.</div>
+      </div>
+      <div class="rec-card p3">
+        <div class="rec-priority">P3 — 60 days</div>
+        <div class="rec-title">Build press &amp; brand mention authority</div>
+        <div class="rec-desc">Increase coverage in authoritative property press (Estates Gazette, Property Week, Evening Standard). Third-party brand mentions are a primary LLM training signal.</div>
+      </div>
+    </div>
+  </section>
+
+ 
+
+</main>
+
+<footer class="report-footer">
+  <div>
+    <span class="footer-brand">Winkworth Estate Agents</span> — AI Visibility Baseline Report
+  </div>
+  <div>Confidential ·2026· For internal use only</div>
+  <div>Next review: Monthly prompt audit cycle</div>
+</footer>
+
+</body>
+</html>
